@@ -2,9 +2,9 @@
 title: 'Nginx, upstream and SSL'
 date: 2017-03-01 15:12:18
 tags:
-  - nginx
-  - web
-  - ssl
+  - Nginx
+  - Web
+  - SSL
 ---
 
 ### 一个最简单的反向代理

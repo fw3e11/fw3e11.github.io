@@ -2,7 +2,7 @@
 title: Java Singleton Pattern
 date: 2017-04-05 10:45:52
 tags:
-  - java
+  - Java
 ---
 
 ### 饿汉式
