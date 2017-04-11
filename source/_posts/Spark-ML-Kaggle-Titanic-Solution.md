@@ -190,4 +190,4 @@ double avgAge = trainingDataset.toJavaRDD()
 ```
 
 分数很低，求轻喷
-![complete](/source/img/complete.png)
+![complete](/img/complete.png)
