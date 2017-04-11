@@ -172,13 +172,13 @@ Coefficients:
 ```
 分别是pClass, sex, age。（其中1是男性，0是女性）说明：
 1. 随着客舱等级（数字）的上升=>社会等级下降=>获救概率下降；
-2. 女士优先在灾难中时间的比较好；
+2. 女士优先在灾难中实践的比较好；
 3. 年龄大小（貌似）和是否获救无关；
 
 当然更详细的分析由数据科学家和算法工程师来做吧，我接着做我的调包侠，下一步就是预测了：
 ``` java
-public Double predict(Vector features) {
-  return lrModel.predict(features);
+public int predict(Vector features) {
+  return (int) lrModel.predict(features);
 }
 ```
 
