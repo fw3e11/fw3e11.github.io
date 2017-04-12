@@ -6,7 +6,7 @@ tags:
 ---
 
 ### 饿汉式
-这种方法简单明了，`static`和`final`关键字保证了instance变量在类第一次加载到内存时就会初始化，所以创建实例本身是线程安全的。
+这种方法写起来很简单，也是我最常用到的实现。`static`和`final`关键字保证了instance变量在类第一次加载到内存时就会初始化，所以创建实例本身是线程安全的。
 ``` java
 public class Singleton {
   private static final Singleton instance = new Singleton();
@@ -16,7 +16,7 @@ public class Singleton {
   }
 }
 ```
-问题也很明显，在类加载后立即初始化的方式不适用于运行时的参数依赖等需要Lazy Initialization等模式的情况。有时候必须`Lazy`——懒。
+问题也很明显，在类加载后立即初始化的方式不适用于运行时的参数依赖等需要Lazy Initialization等模式的情况。这就引入了懒汉式单例模式。
 
 ### 懒汉式
 #### 线程不安全
@@ -72,11 +72,13 @@ DCL的重点在于`volatile`这个关键字。因为`instance = new Singleton()`
 JVM的即时编译器中存在指定重排的优化。
 
 最终的执行顺序不保证是1-2-3，也可能是1-3-2。
-在1-3-2的情况下，一个线程执行完3后被另一个线程抢占，此时instance已经为非null，所以线程二会直接返回instance。
+在1-3-2的情况下，一个线程执行完3后被另一个线程抢占，此时instance已经为非null，所以线程二会直接返回instance。要注意此时2还没有执行呢，也就是说instance还没有被初始化，后续的操作自然会报错了。
 
 `volatile` 有两个用途：
-1. 保证线程内不会存有instance副本，每次读取主内存中的instance。
-2. 进制指令重排优化，对于`volatile`变量的写操作`happen before`读操作。
+1. 保证线程内不会存有instance副本，每次读取主内存中的instance；
+2. 禁止指令重排优化；
+
+这里主要利用的是第二点：禁止指令重排优化。从`happen before`的角度上来理解，就是对`volatile`变量的写操作`happen before`对这个变量的读操作。
 
 ### 内部静态类
 《Effective Java》中推荐的方法。
@@ -97,6 +99,7 @@ public class Singleton {
 4. 不依赖JDK版本
 
 ### 枚举 Enum
+也是《Effective Java》中推荐的方法，不过不是很熟悉，代码看上去不是那么优雅。
 ``` java
 public enum EasySingleton {
   INSTANCE;
