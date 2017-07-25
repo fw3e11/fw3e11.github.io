@@ -149,4 +149,4 @@ public interface ChainedProxyManager {
 > Extension of {@link FlowContext} that provides additional information (which we know after actually processing the request from the client).
 
 #### ProxyAuthenticator
-Interface for objects that can authenticate someone for using our Proxy on the basis of a username and password.
+> Interface for objects that can authenticate someone for using our Proxy on the basis of a username and password.
