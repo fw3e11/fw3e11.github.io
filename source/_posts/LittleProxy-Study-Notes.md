@@ -60,7 +60,7 @@ HttpProxyServerBootstrap withFiltersSource(HttpFiltersSource filtersSource);
   public interface HttpFilters {}
 ```
 
-#### HttpFilters
+### HttpFilters
 由此引入我们第一个介绍的接口`HttpFilters`，一般在`HttpFiltersSource#filterRequest`中使用。`HttpFilters`接口定义了如下方法，在使用时会按照先后顺序被调用：
 
 1. clientToProxyRequest
@@ -81,7 +81,8 @@ HttpProxyServerBootstrap withFiltersSource(HttpFiltersSource filtersSource);
 
 以下是一个通过代理请求打印信息的例子：
 ``` Java
-public class CustomFiltersSource extends HttpFiltersSourceAdapter {
+@Slf4j
+public class CustomHttpFiltersSource extends HttpFiltersSourceAdapter {
 
   @Override
   public HttpFilters filterRequest(HttpRequest originalRequest, ChannelHandlerContext ctx) {
@@ -90,7 +91,8 @@ public class CustomFiltersSource extends HttpFiltersSourceAdapter {
 
   private class UserDefinedHttpFilters extends HttpFiltersAdapter {
 
-    UserDefinedHttpFilters(HttpRequest originalRequest, ChannelHandlerContext ctx) {
+    UserDefinedHttpFilters(HttpRequest originalRequest,
+        ChannelHandlerContext ctx) {
       super(originalRequest, ctx);
     }
 
@@ -107,24 +109,13 @@ public class CustomFiltersSource extends HttpFiltersSourceAdapter {
     }
 
     private void printInfo(String methodName, HttpObject httpObject) {
-      System.out.println(methodName + ": ");
-      System.out.println("httpObject is last: " + ProxyUtils.isLastChunk(httpObject));
-      originalRequest.headers().forEach(entry -> System.out.println(entry.getKey() + ": " + entry.getValue()));
-      System.out.println(originalRequest.getProtocolVersion().toString() + " " + originalRequest.getUri());
-      System.out.println();
+      log.info("[{}]\t{}\t[[is last={}]]", methodName, httpObject, ProxyUtils.isLastChunk(httpObject));
     }
   }
 }
 ```
 
-``` Java
-HttpProxyServer server = DefaultHttpProxyServer.bootstrap()
-    .withFiltersSource(new CustomFiltersSource())
-    .withPort(8080)
-    .start();
-```
-
-#### ChainedProxy
+### ChainedProxy
 接口`ChainedProxy`在且仅在`ChainedProxyManager#lookupChainedProxies`中使用，`ChainedProxyManager`也是一个接口，提供`lookupChainedProxies`方法。一般情况下可以通过继承`ChainedProxyAdapter`的方式使用，不需要直接实现`ChainedProxy`。
 ``` Java
 /**
@@ -140,13 +131,95 @@ public interface ChainedProxyManager {
 }
 ```
 
-#### ActivityTracker
+### ActivityTracker
 > Interface for receiving information about activity in the proxy.
 
-#### FlowContext & FullFlowContext
+### FlowContext & FullFlowContext
 > Encapsulates contextual information for flow information that's being reported to a {@link ActivityTracker}.
 
 > Extension of {@link FlowContext} that provides additional information (which we know after actually processing the request from the client).
 
-#### ProxyAuthenticator
+### ProxyAuthenticator
 > Interface for objects that can authenticate someone for using our Proxy on the basis of a username and password.
+
+## The code
+以下是一个完整的例子：
+``` Java
+@Slf4j
+public class CustomChainedProxyManager implements ChainedProxyManager {
+
+  @Override
+  public void lookupChainedProxies(HttpRequest httpRequest, Queue<ChainedProxy> chainedProxies) {
+    log.info("[lookupChainedProxies] {}", httpRequest);
+    chainedProxies.add(ChainedProxyAdapter.FALLBACK_TO_DIRECT_CONNECTION);
+  }
+}
+```
+
+``` Java
+@Slf4j
+public class CustomActivityTracker extends ActivityTrackerAdapter {
+
+  @Override
+  public void bytesSentToServer(FullFlowContext flowContext, int numberOfBytes) {
+    log.info("[bytesSentToServer] ({} bytes) with {}", numberOfBytes, flowContext.getChainedProxy());
+  }
+
+  @Override
+  public void requestSentToServer(FullFlowContext flowContext, HttpRequest httpRequest) {
+    log.info("[requestSentToServer] ({}) with {}", httpRequest, flowContext.getServerHostAndPort());
+  }
+
+  @Override
+  public void bytesReceivedFromServer(FullFlowContext flowContext, int numberOfBytes) {
+    log.info("[bytesReceivedFromServer] ({} bytes) with {}", numberOfBytes, flowContext.getChainedProxy());
+  }
+
+  @Override
+  public void responseReceivedFromServer(FullFlowContext flowContext, HttpResponse httpResponse) {
+    log.info("[responseReceivedFromServer] ({}) with {}", httpResponse, flowContext.getChainedProxy());
+  }
+
+  @Override
+  public void clientConnected(InetSocketAddress clientAddress) {
+    log.info("[clientConnected] {}", clientAddress.getAddress());
+  }
+
+  @Override
+  public void clientDisconnected(InetSocketAddress clientAddress, SSLSession sslSession) {
+    log.info("[clientDisconnected] {}", clientAddress.getAddress());
+  }
+}
+```
+
+``` Java
+@Slf4j
+public class CustomProxyAuthenticator implements ProxyAuthenticator {
+
+  @Override
+  public boolean authenticate(String userName, String password) {
+    return "wang".equals(userName) && "feng".equals(password);
+  }
+
+  @Override
+  public String getRealm() {
+    return null;
+  }
+}
+```
+
+``` Java
+HttpProxyServer server = DefaultHttpProxyServer.bootstrap()
+        .withAddress(new InetSocketAddress(properties.getHost(), properties.getPort()))
+        .withConnectTimeout(properties.getConnectTimeout())
+        .withIdleConnectionTimeout(properties.getIdleConnectionTimeout())
+        .withThreadPoolConfiguration(new ThreadPoolConfiguration()
+            .withAcceptorThreads(properties.getAcceptThreadNumber())
+            .withClientToProxyWorkerThreads(properties.getClient2proxyThreadNumber())
+            .withProxyToServerWorkerThreads(properties.getProxy2serverThreadNumber()))
+        .withProxyAuthenticator(proxyAuthenticator)
+        .withFiltersSource(httpFiltersSource)
+        .withChainProxyManager(chainedProxyManager)
+        .plusActivityTracker(activityTracker)
+        .start();
+```
