@@ -61,7 +61,7 @@ HttpProxyServerBootstrap withFiltersSource(HttpFiltersSource filtersSource);
 ```
 
 #### HttpFilters
-由此引入我们第一个介绍的接口`HttpFilters`，该接口定义了如下方法，在使用时会按照先后顺序被调用：
+由此引入我们第一个介绍的接口`HttpFilters`，一般在`HttpFiltersSource#filterRequest`中使用。`HttpFilters`接口定义了如下方法，在使用时会按照先后顺序被调用：
 
 1. clientToProxyRequest
 2. proxyToServerConnectionQueued
@@ -125,7 +125,7 @@ HttpProxyServer server = DefaultHttpProxyServer.bootstrap()
 ```
 
 #### ChainedProxy
-接口`ChainedProxy`在且仅在`ChainedProxyManager`中使用，`ChainedProxyManager`也是一个接口，提供`lookupChainedProxies`方法。一般情况下可以通过继承`ChainedProxyAdapter`的方式使用，不需要直接实现`ChainedProxy`。
+接口`ChainedProxy`在且仅在`ChainedProxyManager#lookupChainedProxies`中使用，`ChainedProxyManager`也是一个接口，提供`lookupChainedProxies`方法。一般情况下可以通过继承`ChainedProxyAdapter`的方式使用，不需要直接实现`ChainedProxy`。
 ``` Java
 /**
  * Interface for classes that manage chained proxies.
