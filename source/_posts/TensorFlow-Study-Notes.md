@@ -31,40 +31,65 @@ pip3 install tensorflow -i https://mirrors.ustc.edu.cn/pypi/web/simple
 
 我们可以看出，`Tensor`和`Node`和`Data`是基本等效的同一个概念。
 
-那么什么是`Operation`？就是**操作**。
+那么什么是`Operation`？就是**操作**。 我们从一个简单的例子入手：
 
 ``` python
 #!/usr/bin/env python3
 
 import tensorflow as tf
 
-W = tf.Variable([.3], dtype=tf.float32)
-b = tf.Variable([-.3], dtype=tf.float32)
-x = tf.placeholder(tf.float32)
+# Constants are initialized when you call tf.constant,
+# and their value can never change.
+node1 = tf.constant(3)  # Tensor("Const:0", shape=(), dtype=int32)
+node2 = tf.constant(4.0)  # Tensor("Const_1:0", shape=(), dtype=float32)
 
+print(node1)
+print(node2)
+
+# Model parameters
+# Variables are not initialized when you call tf.Variable.
+W = tf.Variable([.3], dtype=tf.float32)
+b = tf.Variable([-.3], dtype=tf.float32)   
+
+# Model input and output
+x = tf.placeholder(tf.float32)
 linear_model = W * x + b
 
+# Loss
 y = tf.placeholder(tf.float32)
 loss = tf.reduce_sum(tf.square(linear_model - y))
 
-train_data = {x: [1, 2, 3, 4], y: [0, -1, -2, -3]}
-
+# Optimizer
 optimizer = tf.train.GradientDescentOptimizer(0.01)
-train = tf.group(optimizer.minimize(loss))
+train = optimizer.minimize(loss)
 
-with tf.Session() as session:
-    session.run(tf.global_variables_initializer())
-    print(session.run(loss, train_data))
+# Training data
+x_train = [1, 2, 3, 4]
+y_train = [0, -1, -2, -3]
 
-    fixW = tf.assign(W, [-1.])
-    fixb = tf.assign(b, [1.])
-    session.run([fixW, fixb])  # fixW, fixb are operations
-    print(session.run(loss, train_data))
+init = tf.global_variables_initializer() # initial all variables
 
-    session.run(tf.global_variables_initializer())  # reset variables
-    for _ in range(1000):
-        session.run(train, train_data)
+def main():
+    with tf.Session() as session:
+        print(session.run([node1, node2]))  # [3, 4.0]
 
-    print(session.run([W, b]))
+        session.run(init)
+        print(session.run(loss, {x: x_train, y: y_train}))  # 23.66
 
+        fixW = tf.assign(W, [-1.])
+        fixb = tf.assign(b, [1.])
+        session.run([fixW, fixb])  # fixW, fixb are operations
+        print(session.run(loss, {x: x_train, y: y_train}))  # 0.0
+
+        session.run(init)  # reset variables
+
+        for _ in range(1000):
+            session.run(train, {x: x_train, y: y_train})
+        
+        print(session.run([W, b, loss], {x: x_train, y: y_train}))
+        # [array([-0.9999969], dtype=float32), array([ 0.99999082], dtype=float32), 5.6999738e-11]
+
+
+if __name__ == '__main__':
+    main()
 ```
