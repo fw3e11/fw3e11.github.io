@@ -12,7 +12,9 @@ pip3 install tensorflow -i https://mirrors.ustc.edu.cn/pypi/web/simple
 ```
 
 ## 几个概念
-首先是几个概念
+首先是几个概念：什么是Tensor，什么是Flow？
+数据（Data）是怎么表示的？数据是如何处理（manipulate）的？
+
 ### Tensors
 > the central unit of data in TensorFlow
 
@@ -27,6 +29,7 @@ pip3 install tensorflow -i https://mirrors.ustc.edu.cn/pypi/web/simple
 1. 构建一个“可计算的图”
 2. 运行这个图
 
+一切“运行”（`run`）的操作，必须在一个`Session`里面完成，`Session`包含了`TensorFlow`运行环境和执行上下文。
 > A computational graph is a series of TensorFlow operations arranged into a graph of nodes.
 
 我们可以看出，`Tensor`和`Node`和`Data`是基本等效的同一个概念。
@@ -85,7 +88,7 @@ def main():
 
         for _ in range(1000):
             session.run(train, {x: x_train, y: y_train})
-        
+
         print(session.run([W, b, loss], {x: x_train, y: y_train}))
         # [array([-0.9999969], dtype=float32), array([ 0.99999082], dtype=float32), 5.6999738e-11]
 
@@ -93,3 +96,9 @@ def main():
 if __name__ == '__main__':
     main()
 ```
+
+## tf.estimator
+> `tf.estimator` is a high-level TensorFlow library that simplifies the mechanics of machine learning:
+> * running the train loops
+> * running the evaluation loops
+> * managing data sets
