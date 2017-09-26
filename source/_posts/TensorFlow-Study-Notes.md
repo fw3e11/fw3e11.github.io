@@ -101,6 +101,105 @@ if __name__ == '__main__':
 > * managing data sets
 
 `tf.estimator` 提供了相当丰富的模型，同时支持底层API构建出自定义的模型。具体代码请看[官网](https://www.tensorflow.org/get_started/get_started)
+``` python
+#!/usr/bin/env python3
+
+import tensorflow as tf
+import numpy as np
+
+class Tutorial(object):
+    # Constants are initialized when you call tf.constant,
+    # and their value can never change.
+    node1 = tf.constant(3)  # Tensor("Const:0", shape=(), dtype=int32)
+    node2 = tf.constant(4.0)  # Tensor("Const_1:0", shape=(), dtype=float32)
+
+    # Model parameters
+    # Variables are not initialized when you call tf.Variable.
+    W = tf.Variable([.3], dtype=tf.float32)
+    b = tf.Variable([-.3], dtype=tf.float32)
+
+    # Model input and output
+    x = tf.placeholder(tf.float32)
+    linear_model = W * x + b
+
+    # Loss
+    y = tf.placeholder(tf.float32)
+    loss = tf.reduce_sum(tf.square(linear_model - y))
+
+    # Optimizer
+    optimizer = tf.train.GradientDescentOptimizer(0.01)
+    train = optimizer.minimize(loss)
+
+    # Training data
+    x_train = [1, 2, 3, 4]
+    y_train = [0, -1, -2, -3]
+
+    init = tf.global_variables_initializer() # initial all variables
+
+    def hello_main(self):
+        with tf.Session() as session:
+            print(session.run([self.node1, self.node2]))  # [3, 4.0]
+
+            session.run(self.init)
+            print(session.run(self.loss, {self.x: self.x_train, self.y: self.y_train}))  # 23.66
+
+            fixW = tf.assign(self.W, [-1.])
+            fixb = tf.assign(self.b, [1.])
+            session.run([fixW, fixb])  # fixW, fixb are operations
+            print(session.run(self.loss, {self.x: self.x_train, self.y: self.y_train}))  # 0.0
+
+            session.run(self.init)  # reset variables
+
+            for _ in range(1000):
+                session.run(self.train, {self.x: self.x_train, self.y: self.y_train})
+
+            print(session.run([self.W, self.b, self.loss], {self.x: self.x_train, self.y: self.y_train}))
+            # [array([-0.9999969], dtype=float32), array([ 0.99999082], dtype=float32), 5.6999738e-11]
+
+    def estimator_main(self):
+        feature_columns = [tf.feature_column.numeric_column("x", shape=[1])]
+        estimator = tf.estimator.LinearRegressor(feature_columns)
+
+        x_train = np.array(self.x_train)
+        y_train = np.array(self.y_train)
+
+        input_fn = tf.estimator.inputs.numpy_input_fn({"x": x_train}, y_train, batch_size=4, num_epochs=None, shuffle=True)
+        train_input_fn = tf.estimator.inputs.numpy_input_fn({"x": x_train}, y_train, batch_size=4, num_epochs=1000, shuffle=False)
+        estimator.train(input_fn, steps=1000)
+        print("estimator_main: ")
+        print(estimator.evaluate(train_input_fn))
+
+    def custom_estimator_main(self):
+        estimator = tf.estimator.Estimator(model_fn=self._model_fn)
+        x_train = np.array([1., 2., 3., 4.])
+        y_train = np.array([0., -1., -2., -3.])
+        input_fn = tf.estimator.inputs.numpy_input_fn({"x": x_train}, y_train, batch_size=4, num_epochs=None, shuffle=True)
+        train_input_fn = tf.estimator.inputs.numpy_input_fn({"x": x_train}, y_train, batch_size=4, num_epochs=1000, shuffle=False)
+        estimator.train(input_fn=input_fn, steps=1000)
+        print("custom_estimator_main: ")
+        print(estimator.evaluate(train_input_fn))
+
+    def _model_fn(self, features, labels, mode):
+        # Build a linear model and predict values
+        W = tf.get_variable("W", [1], dtype=tf.float64)
+        b = tf.get_variable("b", [1], dtype=tf.float64)
+        y = W * features['x'] + b
+        # Loss sub-graph
+        loss = tf.reduce_sum(tf.square(y - labels))
+        # Training sub-graph
+        global_step = tf.train.get_global_step()
+        optimizer = tf.train.GradientDescentOptimizer(0.01)
+        train = tf.group(optimizer.minimize(loss), tf.assign_add(global_step, 1))
+        # EstimatorSpec connects subgraphs we built to the
+        # appropriate functionality.
+        return tf.estimator.EstimatorSpec(mode=mode, predictions=y, loss=loss, train_op=train)
+
+if __name__ == '__main__':
+    tutorial = Tutorial()
+    tutorial.hello_main()
+    tutorial.estimator_main()
+    tutorial.custom_estimator_main()
+```
 
 ## Softmax for MNIST
 `MNIST` 可以称得上是机器学习领域的 _Hello world_。根据UFLDL中[Softmax Regression](http://ufldl.stanford.edu/wiki/index.php/Softmax_Regression)的解释，`Softmax回归`是`逻辑回归`（二分类问题）在多分类问题上的推广。如果待分类的类别之间互斥，应该使用Softmax回归分类器，反之则应该建立K个逻辑回归分类器。
