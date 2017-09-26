@@ -11,21 +11,21 @@ tags:
 pip3 install tensorflow -i https://mirrors.ustc.edu.cn/pypi/web/simple
 ```
 
-## 几个概念
+## Basic Concept
 首先是几个概念：什么是Tensor，什么是Flow？
 数据（Data）是怎么表示的？数据是如何处理（manipulate）的？
 
 ### Tensors
 > the central unit of data in TensorFlow
 
-`Tensor`就是数据，所以`TensorFlow`就是数据流转，通过数据的流转完成计算任务。数据如何流转？**图**。
+`Tensor`就是数据，所以`TensorFlow`就是数据流转，通过数据的流转完成计算任务。是什么让数据流转起来？是**图**。
 
 ### The Computational Graph
 > You might think of TensorFlow Core programs as consisting of two discrete sections:
 > 1. Building the computational graph
 > 2. Running the computational graph
 
-`TensorFlow`可以理解为一个框架，让`Tensor`“Flow”起来就是
+`TensorFlow`可以理解为一个框架，让`Tensor`“_Flow_”起来就是
 1. 构建一个“可计算的图”
 2. 运行这个图
 
@@ -102,3 +102,5 @@ if __name__ == '__main__':
 > * running the train loops
 > * running the evaluation loops
 > * managing data sets
+
+`tf.estimator` 提供了相当丰富的模型，同时支持底层API构建出自定义的模型。具体代码请看[官网](https://www.tensorflow.org/get_started/get_started)
