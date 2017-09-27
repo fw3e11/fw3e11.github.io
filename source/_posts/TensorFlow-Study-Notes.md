@@ -336,5 +336,8 @@ class MnistTutorial(object):
         return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
                               padding='SAME')
 
+
+if __name__ == '__main__':
+    MnistTutorial().cnn([32, 64], 1024).run()
 # test accuracy: 0.9919
 ```
